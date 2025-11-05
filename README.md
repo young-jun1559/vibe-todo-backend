@@ -22,16 +22,38 @@ npm install
 
 프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 추가하세요:
 
+#### 방법 1: 완전한 URI 사용 (간단)
+
 ```env
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/todo-app
 NODE_ENV=development
+CORS_OPEN=true
+
+# MongoDB 연결 (로컬)
+MONGO_URI=mongodb://localhost:27017/todo-app
+
+# 또는 MongoDB Atlas (클라우드)
+MONGO_URI="mongodb+srv://아이디:비밀번호@cluster0.xxxxx.mongodb.net/todo-app"
 ```
 
-**MongoDB Atlas (클라우드) 사용 시:**
+#### 방법 2: 개별 환경변수 사용 (보안 강화, **Heroku 추천**)
+
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/todo-app?retryWrites=true&w=majority
+PORT=5000
+NODE_ENV=production
+CORS_OPEN=false
+
+# MongoDB 인증 정보 (개별 관리)
+MONGODB_USERNAME=GND
+MONGODB_PASSWORD=dudwns9116!
+MONGODB_CLUSTER=cluster0.h8vx0.mongodb.net
+MONGODB_DATABASE=todo-app
 ```
+
+**⚠️ 주의사항:**
+- 비밀번호에 특수문자가 있으면 자동으로 URL 인코딩됩니다
+- 방법 1과 방법 2 중 **하나만 선택**하면 됩니다
+- Heroku 배포 시 방법 2가 더 안전합니다 (Git에 비밀번호가 노출되지 않음)
 
 ### 3. MongoDB 설치 및 실행
 
@@ -285,6 +307,71 @@ curl -X DELETE http://localhost:5000/api/todos/{id}
 # 삭제 확인 (404가 나와야 정상)
 curl http://localhost:5000/api/todos/{id}
 ```
+
+## 🚀 Heroku 배포
+
+### 1. Heroku 환경변수 설정
+
+Heroku 대시보드(https://dashboard.heroku.com)에서:
+
+**Settings** → **Config Vars** → **Reveal Config Vars**
+
+#### 방법 1: 완전한 URI 사용
+| KEY | VALUE |
+|-----|-------|
+| `MONGO_URI` | `mongodb+srv://아이디:비밀번호@cluster0.xxxxx.mongodb.net/todo-app` |
+| `NODE_ENV` | `production` |
+
+#### 방법 2: 개별 환경변수 사용 (추천)
+| KEY | VALUE |
+|-----|-------|
+| `MONGODB_USERNAME` | `GND` |
+| `MONGODB_PASSWORD` | `dudwns9116!` |
+| `MONGODB_CLUSTER` | `cluster0.h8vx0.mongodb.net` |
+| `MONGODB_DATABASE` | `todo-app` |
+| `NODE_ENV` | `production` |
+| `CORS_OPEN` | `false` |
+
+**⚠️ 중요:**
+- 방법 2가 더 안전합니다 (각 환경변수가 분리되어 관리됨)
+- 특수문자는 자동으로 URL 인코딩됩니다
+- `CORS_OPEN`은 production에서 반드시 `false`로 설정
+
+### 2. GitHub 연동 및 배포
+
+```bash
+# GitHub에 푸시 (Heroku가 자동 배포)
+git push origin main
+```
+
+또는 Heroku CLI 사용:
+
+```bash
+# Heroku에 직접 푸시
+git push heroku main
+```
+
+### 3. 배포 확인
+
+```bash
+# 앱 URL 확인
+heroku open
+
+# 로그 확인
+heroku logs --tail
+```
+
+### 4. 문제 발생 시
+
+**503 Service Unavailable 에러:**
+- Config Vars가 올바르게 설정되었는지 확인
+- 로그에서 MongoDB 연결 상태 확인
+- `heroku logs --tail`로 실시간 로그 확인
+
+**MongoDB 연결 실패:**
+- MongoDB Atlas에서 IP Whitelist 확인 (0.0.0.0/0 허용 필요)
+- 아이디/비밀번호가 정확한지 확인
+- 클러스터 주소가 올바른지 확인
 
 ## 🔒 CORS 문제 해결
 
