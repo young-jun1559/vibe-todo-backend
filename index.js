@@ -48,8 +48,32 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Favicon 요청 처리 (브라우저가 자동으로 요청하는 파일)
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
 // API 라우트 연결
 app.use('/api', apiRoutes);
+
+// 404 에러 처리 (정의되지 않은 라우트)
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: '요청하신 리소스를 찾을 수 없습니다.',
+    path: req.originalUrl
+  });
+});
+
+// 전역 에러 처리 미들웨어
+app.use((err, req, res, next) => {
+  console.error('❌ 서버 에러:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || '서버 내부 오류가 발생했습니다.',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 // MongoDB 연결
 const connectDB = async () => {
