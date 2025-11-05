@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f7f7f7;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-pending { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 CORS 테스트 페이지</h1>
+        
+        <div class="test-section">
+            <h3>📋 서버 설정</h3>
+            <div class="code">
+                백엔드 URL: <input type="text" id="apiUrl" value="http://localhost:5000" style="width: 250px; padding: 5px;">
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>1️⃣ Health Check (CORS 없이)</h3>
+            <p>서버가 실행 중인지 확인합니다.</p>
+            <button onclick="testHealth()">테스트 실행</button>
+            <div id="health-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ API 조회 (CORS 필요)</h3>
+            <p>할일 목록을 조회합니다. CORS가 제대로 설정되어야 성공합니다.</p>
+            <button onclick="testGetTodos()">테스트 실행</button>
+            <div id="todos-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ API 생성 (CORS + POST)</h3>
+            <p>새 할일을 생성합니다. POST 요청도 CORS 체크를 받습니다.</p>
+            <button onclick="testCreateTodo()">테스트 실행</button>
+            <div id="create-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ Credentials 테스트 (쿠키 포함)</h3>
+            <p>인증이 필요한 요청을 시뮬레이션합니다.</p>
+            <button onclick="testWithCredentials()">테스트 실행</button>
+            <div id="credentials-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>💡 CORS 오류 발생 시</h3>
+            <div class="info" style="padding: 15px;">
+                <p><strong>1. .env 파일 수정:</strong></p>
+                <div class="code">
+CORS_OPEN=true
+FRONTEND_URL=http://localhost:3000
+                </div>
+                
+                <p><strong>2. 서버 재시작:</strong></p>
+                <div class="code">
+npm run dev
+                </div>
+                
+                <p><strong>3. 브라우저 캐시 삭제:</strong></p>
+                <div class="code">
+Ctrl + Shift + R (Windows/Linux)
+Cmd + Shift + R (Mac)
+                </div>
+                
+                <p><strong>4. 브라우저 콘솔 확인:</strong></p>
+                <div class="code">
+F12 → Console 탭
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getApiUrl() {
+            return document.getElementById('apiUrl').value;
+        }
+
+        function showResult(elementId, status, message, data = null) {
+            const element = document.getElementById(elementId);
+            const statusClass = status === 'success' ? 'success' : 
+                               status === 'error' ? 'error' : 'info';
+            const statusIndicator = status === 'success' ? 'status-success' : 
+                                   status === 'error' ? 'status-error' : 'status-pending';
+            
+            let html = `<div class="result ${statusClass}">`;
+            html += `<span class="${statusIndicator} status-indicator"></span>`;
+            html += `<strong>${message}</strong>\n\n`;
+            
+            if (data) {
+                html += `<div style="margin-top: 10px;">`;
+                html += `응답 데이터:\n${JSON.stringify(data, null, 2)}`;
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            element.innerHTML = html;
+        }
+
+        async function testHealth() {
+            const resultId = 'health-result';
+            showResult(resultId, 'info', '⏳ 테스트 중...');
+            
+            try {
+                const response = await fetch(`${getApiUrl()}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultId, 'success', '✅ 서버 연결 성공!', data);
+                } else {
+                    showResult(resultId, 'error', '❌ 서버가 오류를 반환했습니다.', data);
+                }
+            } catch (error) {
+                showResult(resultId, 'error', `❌ 연결 실패: ${error.message}\n\n확인사항:\n- 서버가 실행 중인가요? (npm run dev)\n- 백엔드 URL이 정확한가요?`);
+                console.error('Health check 오류:', error);
+            }
+        }
+
+        async function testGetTodos() {
+            const resultId = 'todos-result';
+            showResult(resultId, 'info', '⏳ 테스트 중...');
+            
+            try {
+                const response = await fetch(`${getApiUrl()}/api/todos`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultId, 'success', 
+                        `✅ CORS 통과! 할일 ${data.count}개 조회 성공!`, 
+                        { count: data.count, sample: data.data[0] || '(할일 없음)' }
+                    );
+                } else {
+                    showResult(resultId, 'error', '❌ API 오류가 발생했습니다.', data);
+                }
+            } catch (error) {
+                showResult(resultId, 'error', 
+                    `❌ CORS 오류 발생!\n\n${error.message}\n\n해결 방법:\n1. .env 파일에 CORS_OPEN=true 추가\n2. 서버 재시작 (npm run dev)\n3. 브라우저 캐시 삭제 (Ctrl+Shift+R)\n\n자세한 내용은 CORS_GUIDE.md 참고`
+                );
+                console.error('CORS 오류:', error);
+            }
+        }
+
+        async function testCreateTodo() {
+            const resultId = 'create-result';
+            showResult(resultId, 'info', '⏳ 테스트 중...');
+            
+            try {
+                const response = await fetch(`${getApiUrl()}/api/todos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: 'CORS 테스트 할일',
+                        priority: 'low',
+                        tags: ['테스트', 'CORS']
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultId, 'success', 
+                        `✅ POST 요청 성공! 할일이 생성되었습니다.`, 
+                        { id: data.data._id, title: data.data.title }
+                    );
+                } else {
+                    showResult(resultId, 'error', '❌ 생성 실패', data);
+                }
+            } catch (error) {
+                showResult(resultId, 'error', 
+                    `❌ CORS 오류 (POST)!\n\n${error.message}\n\nPOST 요청도 CORS 검사를 받습니다.\n.env에 CORS_OPEN=true 추가 후 서버 재시작하세요.`
+                );
+                console.error('POST CORS 오류:', error);
+            }
+        }
+
+        async function testWithCredentials() {
+            const resultId = 'credentials-result';
+            showResult(resultId, 'info', '⏳ 테스트 중...');
+            
+            try {
+                const response = await fetch(`${getApiUrl()}/api/todos`, {
+                    credentials: 'include'  // 쿠키 포함
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultId, 'success', 
+                        `✅ Credentials 포함 요청 성공!\n\nCORS 설정이 credentials를 허용합니다.`, 
+                        { message: 'credentials: true 설정 확인됨' }
+                    );
+                } else {
+                    showResult(resultId, 'error', '❌ 요청 실패', data);
+                }
+            } catch (error) {
+                showResult(resultId, 'error', 
+                    `❌ Credentials CORS 오류!\n\n${error.message}\n\nCredentials를 포함한 요청은 더 엄격한 CORS 검사를 받습니다.`
+                );
+                console.error('Credentials CORS 오류:', error);
+            }
+        }
+
+        // 페이지 로드 시 자동으로 health check
+        window.onload = function() {
+            console.log('🔒 CORS 테스트 페이지 로드됨');
+            console.log('💡 이 페이지는 브라우저로 직접 열어야 CORS 테스트가 가능합니다.');
+            console.log('📍 현재 오리진:', window.location.origin);
+        };
+    </script>
+</body>
+</html>
+

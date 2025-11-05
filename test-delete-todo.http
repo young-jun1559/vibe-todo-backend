@@ -1,0 +1,45 @@
+###
+# 할일 삭제 테스트 파일
+# VS Code의 REST Client 확장 프로그램으로 실행 가능
+###
+
+### 1. 서버 상태 확인
+GET http://localhost:5000/health
+
+### 2. 현재 모든 할일 조회 (삭제할 할일의 ID를 확인)
+GET http://localhost:5000/api/todos
+
+### 3. 특정 할일 삭제
+# 위에서 조회한 할일의 ID를 {id}에 입력하세요
+DELETE http://localhost:5000/api/todos/{id}
+
+### 4. 삭제 확인 - 해당 할일 조회 (404 에러가 나와야 정상)
+GET http://localhost:5000/api/todos/{id}
+
+### 5. 전체 할일 목록 다시 조회 (삭제된 것 확인)
+GET http://localhost:5000/api/todos
+
+### 6. 존재하지 않는 ID로 삭제 시도 (실패해야 함)
+DELETE http://localhost:5000/api/todos/000000000000000000000000
+
+### 7. 잘못된 ID 형식으로 삭제 시도 (실패해야 함)
+DELETE http://localhost:5000/api/todos/invalid-id-format
+
+### 8. 테스트용 할일 생성
+POST http://localhost:5000/api/todos
+Content-Type: application/json
+
+{
+  "title": "삭제 테스트용 할일",
+  "priority": "low",
+  "tags": ["테스트", "삭제예정"]
+}
+
+### 9. 생성된 할일 즉시 삭제
+# 위 요청 결과에서 _id를 복사해서 사용하세요
+DELETE http://localhost:5000/api/todos/{새로생성된id}
+
+### 10. 통계 정보로 전체 개수 확인
+GET http://localhost:5000/api/todos/stats
+
+

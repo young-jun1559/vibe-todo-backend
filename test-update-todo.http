@@ -1,0 +1,95 @@
+###
+# 할일 수정 테스트 파일
+# VS Code의 REST Client 확장 프로그램으로 실행 가능
+###
+
+### 1. 서버 상태 확인
+GET http://localhost:5000/health
+
+### 2. 현재 모든 할일 조회 (수정할 할일의 ID를 확인)
+GET http://localhost:5000/api/todos
+
+### 3. 제목만 수정
+# 위에서 조회한 할일의 ID를 {id}에 입력하세요
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "title": "수정된 제목"
+}
+
+### 4. 우선순위만 수정
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "priority": "high"
+}
+
+### 5. 설명 추가/수정
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "description": "이것은 수정된 상세 설명입니다."
+}
+
+### 6. 마감일 설정
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "dueDate": "2025-12-31"
+}
+
+### 7. 태그 수정
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "tags": ["수정됨", "테스트", "중요"]
+}
+
+### 8. 여러 필드 동시 수정
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "title": "완전히 새로운 제목",
+  "description": "완전히 새로운 설명",
+  "priority": "low",
+  "dueDate": "2025-11-30",
+  "tags": ["새로운", "업데이트"]
+}
+
+### 9. 모든 필드 수정
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "title": "최종 수정된 할일",
+  "description": "모든 필드가 업데이트되었습니다",
+  "priority": "medium",
+  "dueDate": "2025-11-15",
+  "tags": ["완료", "확인됨"]
+}
+
+### 10. 수정 후 확인
+GET http://localhost:5000/api/todos/{id}
+
+### 11. 잘못된 우선순위로 수정 시도 (실패해야 함)
+PUT http://localhost:5000/api/todos/{id}
+Content-Type: application/json
+
+{
+  "priority": "urgent"
+}
+
+### 12. 존재하지 않는 ID로 수정 시도 (실패해야 함)
+PUT http://localhost:5000/api/todos/000000000000000000000000
+Content-Type: application/json
+
+{
+  "title": "이건 실패해야 합니다"
+}
+

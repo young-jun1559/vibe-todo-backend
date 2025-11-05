@@ -1,0 +1,42 @@
+###
+# 할일 조회 테스트 파일
+# VS Code의 REST Client 확장 프로그램으로 실행 가능
+###
+
+### 1. 서버 상태 확인
+GET http://localhost:5000/health
+
+### 2. 모든 할일 조회
+GET http://localhost:5000/api/todos
+
+### 3. 우선순위별 필터링 - 높은 우선순위만
+GET http://localhost:5000/api/todos?priority=high
+
+### 4. 우선순위별 필터링 - 중간 우선순위만
+GET http://localhost:5000/api/todos?priority=medium
+
+### 5. 우선순위별 필터링 - 낮은 우선순위만
+GET http://localhost:5000/api/todos?priority=low
+
+### 6. 생성일 기준 오름차순 정렬
+GET http://localhost:5000/api/todos?sort=createdAt
+
+### 7. 생성일 기준 내림차순 정렬 (기본값)
+GET http://localhost:5000/api/todos?sort=-createdAt
+
+### 8. 제목 기준 정렬
+GET http://localhost:5000/api/todos?sort=title
+
+### 9. 우선순위 필터 + 정렬 조합
+GET http://localhost:5000/api/todos?priority=high&sort=-createdAt
+
+### 10. 특정 할일 조회 (ID 필요)
+# 먼저 위의 "모든 할일 조회"를 실행해서 ID를 복사한 후 아래 URL의 {id}를 실제 ID로 교체하세요
+# GET http://localhost:5000/api/todos/{id}
+
+### 11. 통계 정보 조회
+GET http://localhost:5000/api/todos/stats
+
+### 12. API 버전 정보
+GET http://localhost:5000/api
+
