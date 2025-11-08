@@ -1,21 +1,32 @@
 {
   "name": "todo-backend",
   "version": "1.0.0",
-  "description": "Todo application backend API server",
+  "description": "Todo application backend API server with MongoDB Atlas",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "heroku-postbuild": "echo 'Heroku postbuild completed'"
   },
   "keywords": [
     "todo",
     "backend",
     "api",
-    "express"
+    "express",
+    "mongodb",
+    "rest-api"
   ],
-  "author": "",
+  "author": "young-jun1559",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/young-jun1559/vibe-todo-backend.git"
+  },
+  "homepage": "https://github.com/young-jun1559/vibe-todo-backend#readme",
+  "bugs": {
+    "url": "https://github.com/young-jun1559/vibe-todo-backend/issues"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "dotenv": "^16.3.1",
