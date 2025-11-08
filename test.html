@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB Atlas 연결 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .connection-status {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .test-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .test-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-card p {
+            color: #6b7280;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-connection {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-connection:hover:not(:disabled) {
+            background: #2563eb;
+            transform: scale(1.02);
+        }
+
+        .btn-create {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-create:hover:not(:disabled) {
+            background: #059669;
+            transform: scale(1.02);
+        }
+
+        .btn-read {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-read:hover:not(:disabled) {
+            background: #7c3aed;
+            transform: scale(1.02);
+        }
+
+        .btn-update {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-update:hover:not(:disabled) {
+            background: #d97706;
+            transform: scale(1.02);
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete:hover:not(:disabled) {
+            background: #dc2626;
+            transform: scale(1.02);
+        }
+
+        .btn-cleanup {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-cleanup:hover:not(:disabled) {
+            background: #4b5563;
+            transform: scale(1.02);
+        }
+
+        .btn-full {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.1em;
+        }
+
+        .btn-full:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .result {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .result pre {
+            background: #1f2937;
+            color: #10b981;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .full-test-card {
+            grid-column: 1 / -1;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box strong {
+            color: #1e40af;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            list-style-position: inside;
+            color: #4b5563;
+        }
+
+        .info-box ul li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 MongoDB Atlas 연결 테스트</h1>
+            <p>CRUD 작업을 테스트하여 데이터베이스 연결을 확인하세요</p>
+        </div>
+
+        <div class="connection-status">
+            <h3 style="margin-bottom: 15px; color: #1f2937;">📡 연결 상태</h3>
+            <div class="status-indicator" id="connectionStatus">
+                <div class="status-dot disconnected"></div>
+                <div>
+                    <strong id="statusText">상태 확인 중...</strong>
+                    <div id="statusDetail" style="font-size: 0.9em; color: #6b7280; margin-top: 5px;"></div>
+                </div>
+            </div>
+            <button class="btn-connection" onclick="checkConnection()">연결 상태 확인</button>
+        </div>
+
+        <div class="test-grid">
+            <!-- CREATE 테스트 -->
+            <div class="test-card">
+                <h3>✅ CREATE</h3>
+                <p>새로운 Todo를 생성하여 데이터베이스에 저장합니다.</p>
+                <button class="btn-create" onclick="testCreate()">생성 테스트</button>
+            </div>
+
+            <!-- READ 테스트 -->
+            <div class="test-card">
+                <h3>📖 READ</h3>
+                <p>데이터베이스에서 Todo 목록을 조회합니다.</p>
+                <button class="btn-read" onclick="testRead()">조회 테스트</button>
+            </div>
+
+            <!-- UPDATE 테스트 -->
+            <div class="test-card">
+                <h3>✏️ UPDATE</h3>
+                <p>가장 최근 Todo를 수정합니다.</p>
+                <button class="btn-update" onclick="testUpdate()">수정 테스트</button>
+            </div>
+
+            <!-- DELETE 테스트 -->
+            <div class="test-card">
+                <h3>🗑️ DELETE</h3>
+                <p>가장 오래된 Todo를 삭제합니다.</p>
+                <button class="btn-delete" onclick="testDelete()">삭제 테스트</button>
+            </div>
+
+            <!-- CLEANUP 테스트 -->
+            <div class="test-card">
+                <h3>🧹 CLEANUP</h3>
+                <p>모든 테스트 데이터를 정리합니다.</p>
+                <button class="btn-cleanup" onclick="testCleanup()">데이터 정리</button>
+            </div>
+
+            <!-- FULL 테스트 -->
+            <div class="test-card full-test-card">
+                <h3>🚀 전체 통합 테스트</h3>
+                <p>모든 CRUD 작업을 순차적으로 실행하여 종합적으로 테스트합니다.</p>
+                <button class="btn-full" onclick="testFull()">전체 테스트 실행</button>
+                
+                <div class="info-box">
+                    <strong>📋 테스트 순서:</strong>
+                    <ul>
+                        <li>1️⃣ 연결 상태 확인</li>
+                        <li>2️⃣ 데이터 생성 (CREATE)</li>
+                        <li>3️⃣ 데이터 조회 (READ)</li>
+                        <li>4️⃣ 데이터 수정 (UPDATE)</li>
+                        <li>5️⃣ 데이터 삭제 (DELETE)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="result" id="result">
+            <h3>📊 테스트 결과</h3>
+            <pre id="resultContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api/test';
+
+        // 결과 표시 함수
+        function showResult(data) {
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            resultContent.textContent = JSON.stringify(data, null, 2);
+            resultDiv.classList.add('show');
+            
+            // 스크롤
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 버튼 로딩 상태 제어
+        function setButtonLoading(button, loading) {
+            if (loading) {
+                button.disabled = true;
+                button.dataset.originalText = button.textContent;
+                button.innerHTML = '<span class="loading"></span>';
+            } else {
+                button.disabled = false;
+                button.textContent = button.dataset.originalText;
+            }
+        }
+
+        // 연결 상태 확인
+        async function checkConnection() {
+            const button = event.target;
+            setButtonLoading(button, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/connection`);
+                const data = await response.json();
+                
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.getElementById('statusText');
+                const statusDetail = document.getElementById('statusDetail');
+                
+                if (data.connection.isConnected) {
+                    statusDot.className = 'status-dot connected';
+                    statusText.textContent = data.connection.statusText;
+                    statusDetail.innerHTML = `
+                        <div>📦 데이터베이스: ${data.connection.database}</div>
+                        <div>🌐 호스트: ${data.connection.host}</div>
+                    `;
+                } else {
+                    statusDot.className = 'status-dot disconnected';
+                    statusText.textContent = data.connection.statusText;
+                    statusDetail.textContent = '데이터베이스에 연결할 수 없습니다.';
+                }
+                
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message });
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        // CREATE 테스트
+        async function testCreate() {
+            const button = event.target;
+            setButtonLoading(button, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message });
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        // READ 테스트
+        async function testRead() {
+            const button = event.target;
+            setButtonLoading(button, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/read`);
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message });
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        // UPDATE 테스트
+        async function testUpdate() {
+            const button = event.target;
+            setButtonLoading(button, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/update`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message });
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        // DELETE 테스트
+        async function testDelete() {
+            const button = event.target;
+            setButtonLoading(button, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/delete`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message });
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        // CLEANUP 테스트
+        async function testCleanup() {
+            const button = event.target;
+            
+            if (!confirm('모든 테스트 데이터를 삭제하시겠습니까?')) {
+                return;
+            }
+
+            setButtonLoading(button, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/cleanup`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message });
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        // 전체 통합 테스트
+        async function testFull() {
+            const button = event.target;
+            setButtonLoading(button, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/full`);
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message });
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        // 페이지 로드 시 자동으로 연결 상태 확인
+        window.addEventListener('load', () => {
+            setTimeout(checkConnection, 500);
+        });
+    </script>
+</body>
+</html>
+

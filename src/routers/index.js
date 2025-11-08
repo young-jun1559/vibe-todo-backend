@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const todoRoutes = require('./todoRoutes');
+const testRoutes = require('./testRoutes');
 
 /**
  * Routers Index
@@ -16,6 +17,7 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       todos: '/api/todos',
+      test: '/api/test',
       health: '/health'
     }
   });
@@ -23,6 +25,9 @@ router.get('/', (req, res) => {
 
 // Todo 관련 라우트 연결
 router.use('/todos', todoRoutes);
+
+// MongoDB 테스트 라우트 연결
+router.use('/test', testRoutes);
 
 module.exports = router;
 

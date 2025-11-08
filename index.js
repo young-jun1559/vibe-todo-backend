@@ -62,6 +62,11 @@ app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
 });
 
+// MongoDB 테스트 페이지
+app.get('/test', (req, res) => {
+  res.sendFile(__dirname + '/test.html');
+});
+
 // API 라우트 연결
 app.use('/api', apiRoutes);
 
