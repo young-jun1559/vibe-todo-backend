@@ -24,12 +24,14 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',      // React 개발 서버 (기본)
       'http://localhost:3001',      // React 추가 포트
+      'http://localhost:3333',      // Todo 프론트엔드 서버
       'http://localhost:4200',      // Angular
       'http://localhost:8080',      // Vue
       'http://localhost:5173',      // Vite
       'http://localhost:5174',      // Vite 추가 포트
       'http://localhost:5500',      // VS Code Live Server
       'http://127.0.0.1:3000',
+      'http://127.0.0.1:3333',      // Todo 프론트엔드 서버 (127.0.0.1)
       'http://127.0.0.1:5173',
       'http://127.0.0.1:5000',      // 로컬 백엔드
       'http://127.0.0.1:5500',      // VS Code Live Server (127.0.0.1)

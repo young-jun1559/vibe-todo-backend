@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - Heroku 연동</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .api-status {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #ccc;
+        }
+        
+        .status-indicator.connected {
+            background-color: #4caf50;
+        }
+        
+        .status-indicator.disconnected {
+            background-color: #f44336;
+        }
+        
+        .todo-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .todo-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .todo-input:focus {
+            border-color: #667eea;
+        }
+        
+        .priority-select {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            min-width: 120px;
+        }
+        
+        .add-btn {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .add-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .todo-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .todo-item {
+            background: #f8f9ff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+        
+        .todo-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .todo-content {
+            flex: 1;
+        }
+        
+        .todo-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .todo-description {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .todo-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #888;
+        }
+        
+        .priority {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .priority.high {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .priority.medium {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .priority.low {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .todo-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .btn:hover {
+            opacity: 0.8;
+        }
+        
+        .btn-edit {
+            background-color: #2196f3;
+            color: white;
+        }
+        
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .todo-form {
+                flex-direction: column;
+            }
+            
+            .todo-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .todo-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Todo App</h1>
+            <p>Heroku 백엔드와 연동된 할일 관리 앱</p>
+        </div>
+        
+        <div class="api-status">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">API 연결 확인 중...</span>
+        </div>
+        
+        <div id="messageContainer"></div>
+        
+        <form class="todo-form" id="todoForm">
+            <input type="text" class="todo-input" id="todoTitle" placeholder="할일을 입력하세요..." required>
+            <input type="text" class="todo-input" id="todoDescription" placeholder="설명 (선택사항)">
+            <select class="priority-select" id="todoPriority">
+                <option value="medium">보통</option>
+                <option value="high">높음</option>
+                <option value="low">낮음</option>
+            </select>
+            <button type="submit" class="add-btn">추가</button>
+        </form>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">전체 할일</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="highCount">0</div>
+                <div class="stat-label">높은 우선순위</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="mediumCount">0</div>
+                <div class="stat-label">보통 우선순위</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lowCount">0</div>
+                <div class="stat-label">낮은 우선순위</div>
+            </div>
+        </div>
+        
+        <div id="todoList" class="todo-list">
+            <div class="loading">할일 목록을 불러오는 중...</div>
+        </div>
+    </div>
+
+    <script>
+        // API URL 설정
+        // 로컬 개발 환경(localhost:3333)에서는 Heroku 백엔드 사용
+        // 다른 환경에서는 자동으로 적절한 API URL 선택
+        const getApiBaseUrl = () => {
+            const hostname = window.location.hostname;
+
+            // 로컬 개발 환경
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                // 로컬에서는 Heroku 백엔드 사용
+                return 'https://vibe-todo-backend-app-2356eab77040.herokuapp.com/api';
+            }
+
+            // Heroku에 배포된 경우 (백엔드와 프론트엔드가 같은 서버)
+            if (hostname.includes('herokuapp.com')) {
+                return `${window.location.origin}/api`;
+            }
+
+            // 기본값: Heroku 백엔드
+            return 'https://vibe-todo-backend-app-2356eab77040.herokuapp.com/api';
+        };
+
+        const API_BASE_URL = getApiBaseUrl();
+        console.log('🔧 API Base URL:', API_BASE_URL);
+
+        // DOM 요소들
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const messageContainer = document.getElementById('messageContainer');
+        const todoForm = document.getElementById('todoForm');
+        const todoList = document.getElementById('todoList');
+        const totalCount = document.getElementById('totalCount');
+        const highCount = document.getElementById('highCount');
+        const mediumCount = document.getElementById('mediumCount');
+        const lowCount = document.getElementById('lowCount');
+        
+        // 메시지 표시 함수
+        function showMessage(message, type = 'success') {
+            messageContainer.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 3000);
+        }
+        
+        // API 연결 상태 확인
+        async function checkApiStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/`);
+                if (response.ok) {
+                    statusIndicator.className = 'status-indicator connected';
+                    statusText.textContent = 'Heroku API 연결됨';
+                    return true;
+                } else {
+                    throw new Error('API 응답 오류');
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator disconnected';
+                statusText.textContent = 'Heroku API 연결 실패';
+                showMessage('Heroku API에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.', 'error');
+                return false;
+            }
+        }
+        
+        // 할일 목록 조회
+        async function fetchTodos() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/todos`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderTodos(data.data);
+                    updateStats(data.data);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                todoList.innerHTML = `<div class="error">할일 목록을 불러오지 못했습니다: ${error.message}</div>`;
+            }
+        }
+        
+        // 할일 목록 렌더링
+        function renderTodos(todos) {
+            if (todos.length === 0) {
+                todoList.innerHTML = '<div class="loading">등록된 할일이 없습니다. 새로운 할일을 추가해보세요!</div>';
+                return;
+            }
+            
+            todoList.innerHTML = todos.map(todo => `
+                <div class="todo-item">
+                    <div class="todo-content">
+                        <div class="todo-title">${todo.title}</div>
+                        ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
+                        <div class="todo-meta">
+                            <span class="priority ${todo.priority}">${getPriorityText(todo.priority)}</span>
+                            <span>생성일: ${new Date(todo.createdAt).toLocaleDateString('ko-KR')}</span>
+                            ${todo.dueDate ? `<span>마감일: ${new Date(todo.dueDate).toLocaleDateString('ko-KR')}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="btn btn-edit" onclick="editTodo('${todo._id}')">수정</button>
+                        <button class="btn btn-delete" onclick="deleteTodo('${todo._id}')">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 우선순위 텍스트 변환
+        function getPriorityText(priority) {
+            const priorityMap = {
+                high: '높음',
+                medium: '보통',
+                low: '낮음'
+            };
+            return priorityMap[priority] || priority;
+        }
+        
+        // 통계 업데이트
+        function updateStats(todos) {
+            totalCount.textContent = todos.length;
+            highCount.textContent = todos.filter(todo => todo.priority === 'high').length;
+            mediumCount.textContent = todos.filter(todo => todo.priority === 'medium').length;
+            lowCount.textContent = todos.filter(todo => todo.priority === 'low').length;
+        }
+        
+        // 할일 추가
+        async function addTodo(todoData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/todos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(todoData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('할일이 성공적으로 추가되었습니다!');
+                    fetchTodos(); // 목록 새로고침
+                    todoForm.reset(); // 폼 초기화
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                showMessage(`할일 추가 실패: ${error.message}`, 'error');
+            }
+        }
+        
+        // 할일 삭제
+        async function deleteTodo(id) {
+            if (!confirm('정말로 이 할일을 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('할일이 성공적으로 삭제되었습니다!');
+                    fetchTodos(); // 목록 새로고침
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                showMessage(`할일 삭제 실패: ${error.message}`, 'error');
+            }
+        }
+        
+        // 할일 수정 (간단한 제목 변경)
+        async function editTodo(id) {
+            const newTitle = prompt('새로운 할일 제목을 입력하세요:');
+            if (!newTitle || newTitle.trim() === '') {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title: newTitle.trim() })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('할일이 성공적으로 수정되었습니다!');
+                    fetchTodos(); // 목록 새로고침
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                showMessage(`할일 수정 실패: ${error.message}`, 'error');
+            }
+        }
+        
+        // 폼 제출 이벤트
+        todoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('todoTitle').value.trim();
+            const description = document.getElementById('todoDescription').value.trim();
+            const priority = document.getElementById('todoPriority').value;
+            
+            if (!title) {
+                showMessage('할일 제목을 입력해주세요.', 'error');
+                return;
+            }
+            
+            const todoData = {
+                title,
+                priority
+            };
+            
+            if (description) {
+                todoData.description = description;
+            }
+            
+            addTodo(todoData);
+        });
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', async () => {
+            const isApiConnected = await checkApiStatus();
+            if (isApiConnected) {
+                fetchTodos();
+            }
+        });
+        
+        // 5초마다 API 상태 확인
+        setInterval(checkApiStatus, 5000);
+    </script>
+</body>
+</html>

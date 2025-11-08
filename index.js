@@ -67,6 +67,11 @@ app.get('/test', (req, res) => {
   res.sendFile(__dirname + '/test.html');
 });
 
+// Todo 프론트엔드 페이지
+app.get('/good', (req, res) => {
+  res.sendFile(__dirname + '/todo-frontend.html');
+});
+
 // API 라우트 연결
 app.use('/api', apiRoutes);
 
@@ -106,8 +111,8 @@ const connectDB = async () => {
       const username = encodeURIComponent(process.env.MONGODB_USERNAME);
       const password = encodeURIComponent(process.env.MONGODB_PASSWORD);
       const cluster = process.env.MONGODB_CLUSTER || 'cluster0.h8vx0.mongodb.net';
-      const database = process.env.MONGODB_DATABASE || 'todo-app';
-      
+      const database = process.env.MONGODB_DATABASE || 'start';
+
       mongoUri = `mongodb+srv://${username}:${password}@${cluster}/${database}`;
       console.log('✅ 개별 환경변수로 URI 구성');
     }
@@ -125,13 +130,13 @@ const connectDB = async () => {
       console.error('💡 해결 방법 (둘 중 하나 선택):');
       console.error('');
       console.error('   방법 1) 완전한 URI 사용 (.env 파일):');
-      console.error('      MONGO_URI="mongodb+srv://아이디:비밀번호@cluster0.h8vx0.mongodb.net/todo-app"');
+      console.error('      MONGO_URI="mongodb+srv://아이디:비밀번호@cluster0.h8vx0.mongodb.net/start"');
       console.error('');
       console.error('   방법 2) 개별 환경변수 사용 (더 안전, .env 파일):');
       console.error('      MONGODB_USERNAME=GND');
       console.error('      MONGODB_PASSWORD=dudwns9116!');
       console.error('      MONGODB_CLUSTER=cluster0.h8vx0.mongodb.net');
-      console.error('      MONGODB_DATABASE=todo-app');
+      console.error('      MONGODB_DATABASE=start');
       console.error('');
       console.error('   ⚠️ Heroku Config Vars에도 동일하게 설정하세요!');
       console.error('');
